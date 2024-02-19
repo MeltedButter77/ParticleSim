@@ -8,6 +8,7 @@ target_fps = 60
 screen = pygame.display.set_mode((800, 800))
 clock = pygame.time.Clock()
 
+
 class Particle:
     def __init__(self, x, y, size):
         self.x = x
@@ -59,9 +60,12 @@ while running:
     delta_time = end_time - start_time
     start_time = end_time  # Update start_time for the next frame
 
+    # Limit Fps & Display real FPS in the caption
     clock.tick(target_fps)
-    # Display real FPS in the caption
-    real_fps = 1 / (end_time - start_time)
+    if delta_time > 0:
+        real_fps = 1 / delta_time
+    else:
+        real_fps = 0
     pygame.display.set_caption(f'My Game - FPS: {real_fps:.2f}')
 
 pygame.quit()
