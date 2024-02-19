@@ -16,14 +16,16 @@ font = pygame.font.SysFont("Arial",18)
 class Particle():
     instances = []
 
-    def __init__(self, x, y, radius):
+    def __init__(self, x, y):
         print("create")
         self.position = pygame.Vector2(x, y)
-        self.radius = radius
-        self.color = (255, 255, 255)
+        self.radius = 8
+        self.colour = (255, 255, 255)
 
         self.speed = 1
         self.angle = random.random() * math.pi * 2
+
+        self.makeup = ["H"]
 
         Particle.instances.append(self)
 
@@ -32,11 +34,24 @@ class Particle():
             if circle == self:
                 continue
             if self.position.distance_to(circle.position) < self.radius + circle.radius:
-                # get angle of line between 2 points
-                normal = math.atan2(circle.position.y - self.position.y, circle.position.x - self.position.x)
-                # Set angles appropriately
-                self.angle = normal + math.pi
-                circle.angle = normal
+                if self.makeup.count("H") == 1 and len(self.makeup) == 1 and circle.makeup.count("H") == 1 and len(circle.makeup) == 1:
+                    self.makeup.extend(circle.makeup)
+                    Particle.instances.remove(circle)
+                else:
+                    # get angle of line between 2 points
+                    normal = math.atan2(circle.position.y - self.position.y, circle.position.x - self.position.x)
+                    # Set angles appropriately
+                    self.angle = normal + math.pi
+                    circle.angle = normal
+                l = self.makeup
+                # Single H
+                if len(l) == 1 and l[0] == "H":
+                    self.colour = "blue"
+                    self.radius = 8
+                # Double H
+                if len(l) == 2 and l[0] == "H" and l[1] == "H":
+                    self.colour = "green"
+                    self.radius = 10
 
         # Collide with walls of screen
         if self.position.x - self.radius < 0:
@@ -57,7 +72,7 @@ class Particle():
 
 
     def draw(self, screen):
-        pygame.draw.circle(screen, self.color, (int(self.position.x), int(self.position.y)), self.radius)
+        pygame.draw.circle(screen, self.colour, (int(self.position.x), int(self.position.y)), self.radius)
 
 
 def fps_counter():
@@ -77,7 +92,7 @@ while running:
                 running = False
         if event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:
-                Particle(event.pos[0], event.pos[1], 10)
+                Particle(event.pos[0], event.pos[1])
 
     for particle in Particle.instances:
         particle.update()
