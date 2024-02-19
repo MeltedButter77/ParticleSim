@@ -1,3 +1,4 @@
+import random
 import pygame
 import sys
 import math
@@ -28,11 +29,17 @@ class Particle(pygame.sprite.Sprite):
         self.image.fill(self.color)
         self.rect = self.image.get_rect(center=(x, y))
 
-        self.speed = pygame.Vector2(10, 10)
-        self.angle = 0
+        self.speed = pygame.Vector2(100, 100)
+        self.angle = random.randint(0, 2 * math.pi)
         self.angle_limit = 2 * math.pi
 
     def update(self, dt):
+        other_sprites = sprites.copy()
+        other_sprites.remove(self)
+        if pygame.sprite.spritecollideany(self, other_sprites):
+            self.kill()
+            return
+
         self.x += self.speed.x * math.cos(self.angle) * dt
         self.y += self.speed.y * math.sin(self.angle) * dt
         if self.angle > self.angle_limit:
@@ -63,13 +70,11 @@ while running:
                 running = False
         if event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:
-                print("particle created")
                 Particle(event.pos[0], event.pos[1], 10)
 
     # Render sprites
     sprites.update(delta_time)
     sprites.draw(screen)
-    print("one")
 
     # Final Render
     pygame.display.update()
