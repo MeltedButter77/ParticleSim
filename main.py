@@ -10,7 +10,7 @@ target_fps = 60
 
 screen = pygame.display.set_mode((800, 800))
 clock = pygame.time.Clock()
-font = pygame.font.SysFont("Arial",18)
+font = pygame.font.SysFont("Arial", 18)
 
 
 class Particle():
@@ -34,7 +34,8 @@ class Particle():
             if circle == self:
                 continue
             if self.position.distance_to(circle.position) < self.radius + circle.radius:
-                if self.makeup.count("H") == 1 and len(self.makeup) == 1 and circle.makeup.count("H") == 1 and len(circle.makeup) == 1:
+                if self.makeup.count("H") == 1 and len(self.makeup) == 1 and circle.makeup.count("H") == 1 and len(
+                        circle.makeup) == 1:
                     self.makeup.extend(circle.makeup)
                     Particle.instances.remove(circle)
                 else:
@@ -70,20 +71,18 @@ class Particle():
         self.position.x += self.speed * math.cos(self.angle)
         self.position.y += self.speed * math.sin(self.angle)
 
-
     def draw(self, screen):
         pygame.draw.circle(screen, self.colour, (int(self.position.x), int(self.position.y)), self.radius)
 
 
 def fps_counter():
     fps = str(int(clock.get_fps()))
-    fps_t = font.render(fps , 1, pygame.Color("RED"))
-    screen.blit(fps_t,(0,0))
+    fps_t = font.render(fps, 1, pygame.Color("RED"))
+    screen.blit(fps_t, (0, 0))
 
 
 running = True
 while running:
-    start_time = time.time()
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
