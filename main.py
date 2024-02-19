@@ -3,18 +3,31 @@ import sys
 import math
 import time
 
+pygame.init()
+
 target_fps = 60
 
 screen = pygame.display.set_mode((800, 800))
 clock = pygame.time.Clock()
+font = pygame.font.SysFont("Arial",18)
+
+sprites = pygame.sprite.Group()
 
 
-class Particle:
-    def __init__(self, x, y, size):
+class Particle(pygame.sprite.Sprite):
+    def __init__(self, x, y, radius):
+        pygame.sprite.Sprite.__init__(self)
+
+        self.add(sprites)
+
         self.x = x
         self.y = y
-        self.size = size
+        self.radius = radius
         self.color = (255, 255, 255)
+        self.image = pygame.surface.Surface((2 * radius, 2 * radius))
+        self.image.fill(self.color)
+        self.rect = self.image.get_rect(center=(x, y))
+
         self.speed = pygame.Vector2(10, 10)
         self.angle = 0
         self.angle_limit = 2 * math.pi
@@ -24,10 +37,14 @@ class Particle:
         self.y += self.speed.y * math.sin(self.angle) * dt
         if self.angle > self.angle_limit:
             self.angle = 0
+        # update rect location
+        self.rect.topleft = (int(self.x), int(self.y))
 
-    def draw(self, surface):
-        pygame.draw.circle(surface, self.color, (int(self.x), int(self.y)), self.size)
 
+def fps_counter():
+    fps = str(int(clock.get_fps()))
+    fps_t = font.render(fps , 1, pygame.Color("RED"))
+    screen.blit(fps_t,(0,0))
 
 particles = []
 
@@ -46,27 +63,25 @@ while running:
                 running = False
         if event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:
-                particles.append(Particle(event.pos[0], event.pos[1], 10))
+                print("particle created")
+                Particle(event.pos[0], event.pos[1], 10)
 
-    for particle in particles:
-        particle.update(delta_time)
-        particle.draw(screen)
+    # Render sprites
+    sprites.update(delta_time)
+    sprites.draw(screen)
+    print("one")
 
+    # Final Render
     pygame.display.update()
     screen.fill((0, 0, 0))
 
     # delta_time update
     end_time = time.time()
     delta_time = end_time - start_time
-    start_time = end_time  # Update start_time for the next frame
 
     # Limit Fps & Display real FPS in the caption
-    clock.tick(target_fps)
-    if delta_time > 0:
-        real_fps = 1 / delta_time
-    else:
-        real_fps = 0
-    pygame.display.set_caption(f'My Game - FPS: {real_fps:.2f}')
+    clock.tick(60)
+    fps_counter()
 
 pygame.quit()
 sys.exit()
