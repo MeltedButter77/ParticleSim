@@ -12,40 +12,52 @@ screen = pygame.display.set_mode((800, 800))
 clock = pygame.time.Clock()
 font = pygame.font.SysFont("Arial",18)
 
-sprites = pygame.sprite.Group()
 
+class Particle():
+    instances = []
 
-class Particle(pygame.sprite.Sprite):
     def __init__(self, x, y, radius):
-        pygame.sprite.Sprite.__init__(self)
-
-        self.add(sprites)
-
-        self.x = x
-        self.y = y
+        print("create")
+        self.position = pygame.Vector2(x, y)
         self.radius = radius
         self.color = (255, 255, 255)
-        self.image = pygame.surface.Surface((2 * radius, 2 * radius))
-        self.image.fill(self.color)
-        self.rect = self.image.get_rect(center=(x, y))
 
-        self.speed = pygame.Vector2(100, 100)
-        self.angle = random.randint(0, 2 * math.pi)
-        self.angle_limit = 2 * math.pi
+        self.speed = 1
+        self.angle = random.random() * math.pi * 2
 
-    def update(self, dt):
-        other_sprites = sprites.copy()
-        other_sprites.remove(self)
-        if pygame.sprite.spritecollideany(self, other_sprites):
-            self.kill()
-            return
+        Particle.instances.append(self)
 
-        self.x += self.speed.x * math.cos(self.angle) * dt
-        self.y += self.speed.y * math.sin(self.angle) * dt
-        if self.angle > self.angle_limit:
-            self.angle = 0
-        # update rect location
-        self.rect.topleft = (int(self.x), int(self.y))
+    def update(self):
+        for circle in Particle.instances:
+            if circle == self:
+                continue
+            if self.position.distance_to(circle.position) < self.radius + circle.radius:
+                # get angle of line between 2 points
+                normal = math.atan2(circle.position.y - self.position.y, circle.position.x - self.position.x)
+                # Set angles appropriately
+                self.angle = normal + math.pi
+                circle.angle = normal
+
+        # Collide with walls of screen
+        if self.position.x - self.radius < 0:
+            self.position.x = 0 + self.radius
+            self.angle = math.pi - self.angle
+        if self.position.x + self.radius > screen.get_width():
+            self.position.x = screen.get_width() - self.radius
+            self.angle = math.pi - self.angle
+        if self.position.y - self.radius < 0:
+            self.position.y = 0 + self.radius
+            self.angle = math.pi * 2 - self.angle
+        if self.position.y + self.radius > screen.get_height():
+            self.position.y = screen.get_height() - self.radius
+            self.angle = math.pi * 2 - self.angle
+
+        self.position.x += self.speed * math.cos(self.angle)
+        self.position.y += self.speed * math.sin(self.angle)
+
+
+    def draw(self, screen):
+        pygame.draw.circle(screen, self.color, (int(self.position.x), int(self.position.y)), self.radius)
 
 
 def fps_counter():
@@ -53,11 +65,6 @@ def fps_counter():
     fps_t = font.render(fps , 1, pygame.Color("RED"))
     screen.blit(fps_t,(0,0))
 
-particles = []
-
-start_time = 0
-delta_time = 0
-end_time = 0
 
 running = True
 while running:
@@ -72,17 +79,13 @@ while running:
             if event.button == 1:
                 Particle(event.pos[0], event.pos[1], 10)
 
-    # Render sprites
-    sprites.update(delta_time)
-    sprites.draw(screen)
+    for particle in Particle.instances:
+        particle.update()
+        particle.draw(screen)
 
     # Final Render
     pygame.display.update()
-    screen.fill((0, 0, 0))
-
-    # delta_time update
-    end_time = time.time()
-    delta_time = end_time - start_time
+    screen.fill((100, 100, 100))
 
     # Limit Fps & Display real FPS in the caption
     clock.tick(60)
