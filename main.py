@@ -27,7 +27,7 @@ class Ball:
         self.velocity = pygame.Vector2(math.cos(self.angle), math.sin(self.angle)) * self.speed
 
         self.gravity = 0.1
-        self.collision_dampening = 0.6
+        self.collision_dampening = 0.8
 
         Ball.instances.append(self)
 
@@ -46,8 +46,6 @@ class Ball:
                 # Set angles appropriately
                 self.angle = normal + math.pi
                 circle.angle = normal
-                self.speed = self.speed * self.collision_dampening
-                circle.speed = self.speed * self.collision_dampening
 
         # Collide with walls of screen
         if self.position.x - self.radius < 0:
