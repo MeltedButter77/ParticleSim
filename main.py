@@ -13,66 +13,78 @@ clock = pygame.time.Clock()
 font = pygame.font.SysFont("Arial", 18)
 
 
-class Particle():
+class Ball:
     instances = []
 
     def __init__(self, x, y):
-        print("create")
         self.position = pygame.Vector2(x, y)
-        self.radius = 8
+        self.radius = 15
         self.colour = (255, 255, 255)
 
         self.speed = 1
         self.angle = random.random() * math.pi * 2
 
-        self.makeup = ["H"]
+        self.velocity = pygame.Vector2(math.cos(self.angle), math.sin(self.angle)) * self.speed
 
-        Particle.instances.append(self)
+        self.gravity = 0.1
+        self.collision_dampening = 0.6
+
+        Ball.instances.append(self)
 
     def update(self):
-        for circle in Particle.instances:
+        ### Collisions ###
+        # Collide other balls
+        for circle in Ball.instances:
             if circle == self:
                 continue
             if self.position.distance_to(circle.position) < self.radius + circle.radius:
-                if self.makeup.count("H") == 1 and len(self.makeup) == 1 and circle.makeup.count("H") == 1 and len(
-                        circle.makeup) == 1:
-                    self.makeup.extend(circle.makeup)
-                    Particle.instances.remove(circle)
-                else:
-                    # get angle of line between 2 points
-                    normal = math.atan2(circle.position.y - self.position.y, circle.position.x - self.position.x)
-                    # Set angles appropriately
-                    self.angle = normal + math.pi
-                    circle.angle = normal
-                l = self.makeup
-                # Single H
-                if len(l) == 1 and l[0] == "H":
-                    self.colour = "blue"
-                    self.radius = 8
-                # Double H
-                if len(l) == 2 and l[0] == "H" and l[1] == "H":
-                    self.colour = "green"
-                    self.radius = 10
+                # get angle of line between 2 points
+                normal = math.atan2(circle.position.y - self.position.y, circle.position.x - self.position.x)
+
+                pygame.draw.line(screen, (0, 255, 0), (int(self.position.x), int(self.position.y)), (int(circle.position.x), int(circle.position.y)), 2)
+
+                # Set angles appropriately
+                self.angle = normal + math.pi
+                circle.angle = normal
+                self.speed = self.speed * self.collision_dampening
+                circle.speed = self.speed * self.collision_dampening
 
         # Collide with walls of screen
         if self.position.x - self.radius < 0:
             self.position.x = 0 + self.radius
             self.angle = math.pi - self.angle
+            self.speed = self.speed * self.collision_dampening
         if self.position.x + self.radius > screen.get_width():
             self.position.x = screen.get_width() - self.radius
             self.angle = math.pi - self.angle
+            self.speed = self.speed * self.collision_dampening
         if self.position.y - self.radius < 0:
             self.position.y = 0 + self.radius
             self.angle = math.pi * 2 - self.angle
+            self.speed = self.speed * self.collision_dampening
         if self.position.y + self.radius > screen.get_height():
             self.position.y = screen.get_height() - self.radius
             self.angle = math.pi * 2 - self.angle
+            self.speed = self.speed * self.collision_dampening
 
+        ### Gravity effects ###
+        # get velocity from angle and speed
+        self.velocity = pygame.Vector2(math.cos(self.angle), math.sin(self.angle)) * self.speed
+
+        # add gravity to the velocity
+        self.velocity.y += self.gravity
+
+        # convert velocity back to self.angle and self.speed
+        self.angle = math.atan2(self.velocity.y, self.velocity.x)
+        self.speed = math.sqrt(self.velocity.x ** 2 + self.velocity.y ** 2)
+
+        ### Position updates ###
         self.position.x += self.speed * math.cos(self.angle)
         self.position.y += self.speed * math.sin(self.angle)
 
-    def draw(self, screen):
-        pygame.draw.circle(screen, self.colour, (int(self.position.x), int(self.position.y)), self.radius)
+    def draw(self, surface):
+        pygame.draw.circle(surface, self.colour, (int(self.position.x), int(self.position.y)), self.radius)
+        pygame.draw.line(screen, (255, 0, 0), (int(self.position.x), int(self.position.y)), (int(self.position.x + self.radius * math.cos(self.angle)), int(self.position.y + self.radius * math.sin(self.angle))), 2)
 
 
 def fps_counter():
@@ -91,11 +103,11 @@ while running:
                 running = False
         if event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:
-                Particle(event.pos[0], event.pos[1])
+                Ball(event.pos[0], event.pos[1])
 
-    for particle in Particle.instances:
-        particle.update()
+    for particle in Ball.instances:
         particle.draw(screen)
+        particle.update()
 
     # Final Render
     pygame.display.update()
